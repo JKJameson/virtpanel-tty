@@ -17,7 +17,7 @@ process.on('uncaughtException', function(e) {
 var httpserv;
 
 var app = express();
-app.use(bodyParser());
+app.use(bodyParser.urlencoded({extended: true}));
 //app.use('/', express.static(path.join(__dirname, 'public')));
 
 httpserv = http.createServer(app).listen(port, function() {
