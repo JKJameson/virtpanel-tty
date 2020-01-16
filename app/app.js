@@ -1,5 +1,6 @@
 'use strict';
 var express = require('express');
+var bodyParser = require('body-parser');
 var http = require('http');
 var https = require('https');
 var path = require('path');
@@ -7,30 +8,7 @@ var server = require('socket.io');
 var pty = require('pty.js');
 var fs = require('fs');
 
-var opts = require('optimist')
-    .options({
-        sslkey: {
-            demand: false,
-            description: 'path to SSL key'
-        },
-        sslcert: {
-            demand: false,
-            description: 'path to SSL certificate'
-        },
-        port: {
-            demand: true,
-            alias: 'p',
-            description: 'wetty listen port'
-        },
-    }).boolean('allow_discovery').argv;
-
-var runhttps = false;
-if (opts.sslkey && opts.sslcert) {
-    runhttps = true;
-    opts.ssl = {};
-    opts.ssl.key = fs.readFileSync(path.resolve(opts.sslkey));
-    opts.ssl.cert = fs.readFileSync(path.resolve(opts.sslcert));
-}
+var port = 3000;
 
 process.on('uncaughtException', function(e) {
     console.error('Error: ' + e);
@@ -39,18 +17,12 @@ process.on('uncaughtException', function(e) {
 var httpserv;
 
 var app = express();
-app.use(express.bodyParser());
-app.use('/', express.static(path.join(__dirname, 'public')));
+app.use(bodyParser());
+//app.use('/', express.static(path.join(__dirname, 'public')));
 
-if (runhttps) {
-    httpserv = https.createServer(opts.ssl, app).listen(opts.port, function() {
-        console.log('https on port ' + opts.port);
-    });
-} else {
-    httpserv = http.createServer(app).listen(opts.port, function() {
-        console.log('http on port ' + opts.port);
-    });
-}
+httpserv = http.createServer(app).listen(port, function() {
+	console.log('Listening for connections on port '+port);
+});
 
 var io = server(httpserv,{path: '/wetty/socket.io'});
 io.on('connection', function(socket){
