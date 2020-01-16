@@ -54,16 +54,19 @@ if (runhttps) {
 
 var io = server(httpserv,{path: '/wetty/socket.io'});
 io.on('connection', function(socket){
-    //console.log((new Date()) + ' Connection accepted from '+socket.handshake.address);
-
+	var ip = socket.handshake.headers['x-forwarded-for'];
     var authtoken = path.basename(socket.handshake.query.auth);
-	var authTokenFile = '/wetty-config/tokens/'+authtoken;
-	
-	if (!fs.existsSync(authTokenFile))
-		return;
-	
+    var authTokenFile = '/wetty-config/tokens/'+authtoken;
+
+    if (!fs.existsSync(authTokenFile)) {
+        console.log((new Date()) + ' Unauthorized connection from '+ip);
+        return;
+    }
+
     var json = fs.readFileSync(authTokenFile,'utf8');
     var settings = JSON.parse(json);
+
+    console.log((new Date()) + " " + settings.user + " logged in from " + ip);
 
     var term;
     term = pty.spawn('ssh', [settings.user + "@" + settings.host, '-p', settings.port, '-o', 'PreferredAuthentications=publickey', '-i', '/wetty-config/keys/'+authtoken, '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'LogLevel=error'], {
@@ -71,7 +74,6 @@ io.on('connection', function(socket){
         cols: 80,
         rows: 30
     });
-    console.log((new Date()) + " PID=" + term.pid + " STARTED on behalf of user=" + settings.user + " ip=" + settings.host);
     term.on('data', function(data) {
         socket.emit('output', data);
     });
@@ -85,6 +87,8 @@ io.on('connection', function(socket){
         term.write(data);
     });
     socket.on('disconnect', function() {
+        console.log((new Date()) + " PID=" + term.pid + " DISCONNECTED");
+        term.kill('SIGKILL');
         term.end();
     });
 });
