@@ -35,13 +35,24 @@ io.on('connection', function(socket){
         return;
     }
 
-    var json = fs.readFileSync(authTokenFile,'utf8');
+    var json = fs.readFileSync(authTokenFile, 'utf8');
     var settings = JSON.parse(json);
+    fs.unlinkSync(authTokenFile);
 
     console.log((new Date()) + " " + settings.user + " logged in from " + ip);
 
+    var sshKeyDir = '/tmp/ssh';
+    if (!fs.existsSync(sshKeyDir)) {
+        fs.mkdirSync(sshKeyDir);
+        fs.chmodSync(sshKeyDir, 0o100);
+    }
+
+    fs.writeFileSync(sshKeyDir+'/'+authtoken, fs.readFileSync('/wetty-config/keys/'+authtoken, 'utf8'));
+    fs.chmodSync(sshKeyDir+'/'+authtoken, 0o400);
+    fs.unlinkSync('/wetty-config/keys/'+authtoken);
+
     var term;
-    term = pty.spawn('ssh', [settings.user + "@" + settings.host, '-p', settings.port, '-o', 'PreferredAuthentications=publickey', '-i', '/wetty-config/keys/'+authtoken, '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'LogLevel=error'], {
+    term = pty.spawn('ssh', [settings.user + "@" + settings.host, '-p', settings.port, '-o', 'PreferredAuthentications=publickey', '-i', sshKeyDir+'/'+authtoken, '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'LogLevel=error'], {
         name: 'xterm-256color',
         cols: 80,
         rows: 30
