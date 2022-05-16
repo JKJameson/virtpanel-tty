@@ -1,26 +1,22 @@
 {
-    "name": "wetty",
-    "version": "0.2.0",
+    "name": "virtpanel-tty",
+    "version": "1.0.0",
     "dependencies": {
-        "express": "^4.17.1",
-        "body-parser": "^1.19.0",
-        "socket.io": "^2.3.0",
-        "pty.js": "^0.3.1"
+        "express": "^4.18.1",
+        "body-parser": "^1.20.0",
+        "socket.io": "^4.5.0",
+        "node-pty": "^0.10.1"
     },
-    "description": "Wetty = Web + tty. Terminal access in browser over http/https ",
+    "description": "Terminal access via a web browser",
     "main": "app.js",
     "repository": {
         "type": "git",
-        "url": "git://github.com/krishnasrinivas/wetty.git"
+        "url": "https://github.com/JKJameson/virtpanel-tty.git"
     },
-    "author": "Krishna Srinivas <krishna.srinivas@gmail.com> (https://github.com/krishnasrinivas)",
+    "author": "Josh Jameson <josh@servebyte.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/krishnasrinivas/wetty/issues"
+        "url": "https://github.com/JKJameson/virtpanel-tty.git"
     },
-    "homepage": "https://github.com/krishnasrinivas/wetty",
-    "preferGlobal": "true",
-    "bin": {
-        "wetty": "./app.js"
-    }
+    "homepage": "https://virtpanel.com"
 }

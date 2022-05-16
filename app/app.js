@@ -1,11 +1,13 @@
 'use strict';
+var os = require('os');
 var express = require('express');
 var bodyParser = require('body-parser');
 var http = require('http');
 var https = require('https');
 var path = require('path');
 var server = require('socket.io');
-var pty = require('pty.js');
+//var pty = require('pty.js');
+var pty = require('node-pty');
 var fs = require('fs');
 
 var port = 3000;
@@ -24,11 +26,11 @@ httpserv = http.createServer(app).listen(port, function() {
 	console.log('Listening for connections on port '+port);
 });
 
-var io = server(httpserv,{path: '/wetty/socket.io'});
+var io = server(httpserv,{path: '/tty/socket.io'});
 io.on('connection', function(socket){
 	var ip = socket.handshake.headers['x-forwarded-for'];
     var authtoken = path.basename(socket.handshake.query.auth);
-    var authTokenFile = '/wetty-config/tokens/'+authtoken;
+    var authTokenFile = '/tty-config/tokens/'+authtoken;
 
     if (!fs.existsSync(authTokenFile)) {
         console.log((new Date()) + ' Unauthorized connection from '+ip);
@@ -47,15 +49,14 @@ io.on('connection', function(socket){
         fs.chmodSync(sshKeyDir, 0o100);
     }
 
-    fs.writeFileSync(sshKeyDir+'/'+authtoken, fs.readFileSync('/wetty-config/keys/'+authtoken, 'utf8'));
+    fs.writeFileSync(sshKeyDir+'/'+authtoken, fs.readFileSync('/tty-config/keys/'+authtoken, 'utf8'));
     fs.chmodSync(sshKeyDir+'/'+authtoken, 0o400);
-    fs.unlinkSync('/wetty-config/keys/'+authtoken);
+    fs.unlinkSync('/tty-config/keys/'+authtoken);
 
     var term;
-    term = pty.spawn('ssh', [settings.user + "@" + settings.host, '-p', settings.port, '-o', 'PreferredAuthentications=publickey', '-i', sshKeyDir+'/'+authtoken, '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'LogLevel=error'], {
-        name: 'xterm-256color',
-        cols: 80,
-        rows: 30
+    term = pty.spawn('ssh', [settings.user + "@" + settings.host, '-p', settings.port, '-t', '-o', 'PreferredAuthentications=publickey', '-i', sshKeyDir+'/'+authtoken, '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'LogLevel=error'], {
+        cwd: process.env.HOME,
+        env: process.env
     });
     term.on('data', function(data) {
         socket.emit('output', data);
